@@ -84,14 +84,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{
-            width: 24, height: 24, borderRadius: '50%',
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <span style={{ fontWeight: 700, fontSize: 12, color: '#0D1117' }}>V</span>
-          </div>
+          <img src="/favicon.svg" alt="Vouch" width={24} height={24} style={{ flexShrink: 0 }} />
           <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Vouch</span>
         </div>
         <span style={{
