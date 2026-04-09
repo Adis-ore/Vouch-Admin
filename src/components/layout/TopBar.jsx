@@ -1,10 +1,27 @@
-import { FiLogOut } from 'react-icons/fi'
+import { useState, useEffect } from 'react'
+import { FiLogOut, FiSun, FiMoon } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 const roleLabel = { super_admin: 'Super Admin', moderator: 'Moderator', support: 'Support' }
 
+function getInitialTheme() {
+  try {
+    const stored = localStorage.getItem('vouch-admin-theme')
+    if (stored) return stored
+  } catch (e) {}
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
 export default function TopBar({ user, admin }) {
   const navigate = useNavigate()
+  const [theme, setTheme] = useState(getInitialTheme)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try { localStorage.setItem('vouch-admin-theme', theme) } catch (e) {}
+  }, [theme])
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
 
   const logout = () => {
     localStorage.removeItem('admin_session')
@@ -34,6 +51,21 @@ export default function TopBar({ user, admin }) {
       }}>
         {roleLabel[admin?.role] ?? 'Admin'}
       </span>
+      <button
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 32, height: 32, borderRadius: 6,
+          background: 'var(--surface-alt)', border: '1px solid var(--border)',
+          color: 'var(--text-secondary)', cursor: 'pointer',
+          transition: 'color 0.15s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+      >
+        {theme === 'dark' ? <FiSun size={15} /> : <FiMoon size={15} />}
+      </button>
       <button
         onClick={logout}
         style={{

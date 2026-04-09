@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: dark light;
   --bg: #0D1117;
   --surface: #161B22;
   --surface-alt: #21262D;
@@ -16,6 +16,38 @@
   --text-primary: #E6EDF3;
   --text-secondary: #8B949E;
   --text-muted: #484F58;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F5F2EC;
+    --surface: #FFFFFF;
+    --surface-alt: #EDE9E1;
+    --border: #DDD8CE;
+    --accent: #C9821A;
+    --success: #1FAE8D;
+    --danger: #C9412E;
+    --warning: #C47E00;
+    --info: #2B74D9;
+    --text-primary: #0D1117;
+    --text-secondary: #4A4654;
+    --text-muted: #9A9699;
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #F5F2EC;
+  --surface: #FFFFFF;
+  --surface-alt: #EDE9E1;
+  --border: #DDD8CE;
+  --accent: #C9821A;
+  --success: #1FAE8D;
+  --danger: #C9412E;
+  --warning: #C47E00;
+  --info: #2B74D9;
+  --text-primary: #0D1117;
+  --text-secondary: #4A4654;
+  --text-muted: #9A9699;
 }
 
 * { box-sizing: border-box; }
@@ -81,7 +113,7 @@ input::placeholder, textarea::placeholder {
 
 .btn-muted:hover {
   color: var(--text-primary);
-  background: #2d333b;
+  background: var(--border);
 }
 
 .btn-accent {

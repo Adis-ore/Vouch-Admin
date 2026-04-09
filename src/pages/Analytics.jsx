@@ -6,7 +6,71 @@ import {
 import PageHeader from '../components/layout/PageHeader'
 import StatCard from '../components/shared/StatCard'
 import { STATS, SIGNUP_CHART_DATA, CHECKINS_CHART_DATA, JOURNEY_STATUS_DATA, WEEKLY_REVENUE, CATEGORIES } from '../data/dummy'
-import { FiTrendingUp, FiUsers, FiRepeat, FiActivity, FiClock, FiUserMinus, FiUserCheck, FiLock } from 'react-icons/fi'
+import { FiTrendingUp, FiUsers, FiRepeat, FiActivity, FiClock, FiUserMinus, FiUserCheck, FiLock, FiZap } from 'react-icons/fi'
+
+// ─── App Behaviour Data ──────────────────────────────────────────────────────
+
+// Average time users spend on each screen (seconds)
+const screenTimeData = [
+  { screen: 'Journey Detail', avgSec: 187 },
+  { screen: 'Home',           avgSec: 142 },
+  { screen: 'Check-in',       avgSec: 118 },
+  { screen: 'Discover',       avgSec: 96  },
+  { screen: 'Chat',           avgSec: 84  },
+  { screen: 'Profile',        avgSec: 61  },
+  { screen: 'Milestones',     avgSec: 54  },
+  { screen: 'Notifications',  avgSec: 38  },
+  { screen: 'Settings',       avgSec: 29  },
+  { screen: 'Onboarding',     avgSec: 22  },
+]
+
+// Most tapped elements across the app (tap count per 1000 sessions)
+const mostTappedData = [
+  { element: '"Check in now" button',   taps: 2840 },
+  { element: 'Journey card (open)',     taps: 2210 },
+  { element: '"Join →" button',         taps: 1760 },
+  { element: 'Chat send button',        taps: 1540 },
+  { element: 'Notification bell',       taps: 1320 },
+  { element: 'Approve check-in',        taps: 980  },
+  { element: '"Create journey" CTA',    taps: 870  },
+  { element: 'Milestone "Reflect"',     taps: 620  },
+]
+
+// Least tapped elements (per 1000 sessions)
+const leastTappedData = [
+  { element: 'Share completion card',  taps: 42  },
+  { element: 'FAQ link',               taps: 38  },
+  { element: '"Flag" check-in',        taps: 31  },
+  { element: 'Terms of service',       taps: 17  },
+  { element: 'Privacy policy',         taps: 14  },
+  { element: '"Abandon journey"',      taps: 9   },
+  { element: 'Anonymous mode toggle',  taps: 7   },
+  { element: 'Delete account',         taps: 3   },
+]
+
+// Page interaction score (composite: time + taps + return visits, 0–100)
+const pageInteractionData = [
+  { page: 'Journey Detail', score: 94 },
+  { page: 'Check-in',       score: 88 },
+  { page: 'Home',           score: 82 },
+  { page: 'Chat',           score: 74 },
+  { page: 'Discover',       score: 67 },
+  { page: 'Milestones',     score: 55 },
+  { page: 'Profile',        score: 48 },
+  { page: 'Notifications',  score: 41 },
+  { page: 'Settings',       score: 22 },
+  { page: 'FAQ',            score: 11 },
+]
+
+// Session tap distribution — where users spend their taps
+const tapDistribution = [
+  { name: 'Check-ins',   value: 31, color: '#E8A838' },
+  { name: 'Navigation',  value: 24, color: '#3ECFAA' },
+  { name: 'Join/Create', value: 18, color: '#6366f1' },
+  { name: 'Chat',        value: 14, color: '#47bfff' },
+  { name: 'Social',      value: 8,  color: '#a78bfa' },
+  { name: 'Settings',    value: 5,  color: '#94a3b8' },
+]
 
 // Extended data for analytics-specific charts
 const retentionData = [
@@ -388,6 +452,136 @@ export default function Analytics() {
             <Tooltip contentStyle={chartStyle} formatter={v => [v, 'Avg Members']} />
             <Area type="monotone" dataKey="avg" stroke="#6366f1" fill="url(#groupGrad)" strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} />
           </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Divider */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          App Behaviour
+        </div>
+      </div>
+
+      {/* App Behaviour KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+        <StatCard label="Most-Used Screen" value="Journey Detail" subtext="187s avg time on screen" icon={FiActivity} />
+        <StatCard label="Top Tapped Element" value="Check in now" subtext="2,840 taps / 1k sessions" icon={FiZap} />
+        <StatCard label="Least-Used Feature" value="Delete Account" subtext="3 taps / 1k sessions" icon={FiZap} />
+        <StatCard label="Highest Interaction Page" value="Journey Detail" subtext="Score 94 / 100" icon={FiTrendingUp} />
+      </div>
+
+      {/* Screen Time + Tap Distribution */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="panel">
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Time Spent per Screen (avg seconds)
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={screenTimeData} layout="vertical">
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" unit="s" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
+              <YAxis dataKey="screen" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickLine={false} axisLine={false} width={100} />
+              <Tooltip contentStyle={chartStyle} formatter={v => [`${v}s`, 'Avg Time']} />
+              <Bar dataKey="avgSec" fill="var(--info)" radius={[0, 3, 3, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="panel">
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Where Taps Go (% of session taps)
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <ResponsiveContainer width="50%" height={220}>
+              <PieChart>
+                <Pie data={tapDistribution} dataKey="value" innerRadius={45} outerRadius={75} paddingAngle={3}>
+                  {tapDistribution.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={chartStyle} formatter={v => [`${v}%`, 'Share']} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {tapDistribution.map((d, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', flex: 1 }}>{d.name}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)' }}>{d.value}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Most tapped + Least tapped */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="panel">
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Most Tapped Elements <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-muted)' }}>per 1k sessions</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {mostTappedData.map((d, i) => {
+              const pct = Math.round((d.taps / mostTappedData[0].taps) * 100)
+              return (
+                <div key={i}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{d.element}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{d.taps.toLocaleString()}</span>
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: 'var(--border)' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: 'var(--accent)' }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Least Tapped Elements <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-muted)' }}>per 1k sessions</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {leastTappedData.map((d, i) => {
+              const pct = Math.round((d.taps / leastTappedData[0].taps) * 100)
+              return (
+                <div key={i}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{d.element}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{d.taps}</span>
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: 'var(--border)' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: '#f87171' }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Page Interaction Score */}
+      <div className="panel">
+        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 4 }}>
+          Page Interaction Score
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Composite score (0–100) based on time on screen, tap density, and return visits
+        </div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={pageInteractionData}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="page" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} domain={[0, 100]} />
+            <Tooltip contentStyle={chartStyle} formatter={v => [v, 'Score']} />
+            <Bar dataKey="score" radius={[3, 3, 0, 0]}>
+              {pageInteractionData.map((entry, i) => (
+                <Cell key={i} fill={entry.score >= 80 ? 'var(--success)' : entry.score >= 50 ? 'var(--accent)' : 'var(--text-muted)'} />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
