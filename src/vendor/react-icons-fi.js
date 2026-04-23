@@ -1,1 +1,0 @@
-// This file is deprecated, use react-icons-fi.jsx instead

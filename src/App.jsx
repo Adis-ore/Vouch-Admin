@@ -17,6 +17,8 @@ import FlaggedCheckins from './pages/moderation/FlaggedCheckins'
 import DisputeQueue from './pages/moderation/DisputeQueue'
 import ActiveStakes from './pages/payments/ActiveStakes'
 import ForfeitureLog from './pages/payments/ForfeitureLog'
+import RefundLog from './pages/payments/RefundLog'
+import RefundFailures from './pages/payments/RefundFailures'
 import Categories from './pages/content/Categories'
 import PushAnnouncements from './pages/communications/PushAnnouncements'
 import AdminAccounts from './pages/settings/AdminAccounts'
@@ -66,6 +68,8 @@ function AdminLayout() {
             <Route path="moderation/disputes" element={<DisputeQueue />} />
             <Route path="payments/stakes" element={<ActiveStakes />} />
             <Route path="payments/forfeitures" element={<ForfeitureLog />} />
+            <Route path="payments/refunds" element={<RefundLog />} />
+            <Route path="payments/refund-failures" element={<RefundFailures />} />
             <Route path="content/categories" element={<Categories />} />
             <Route path="communications/push" element={<PushAnnouncements />} />
             <Route path="settings/accounts" element={<AdminAccounts />} />

@@ -1,42 +1,40 @@
-import { useState } from 'react'
 import PageHeader from '../../components/layout/PageHeader'
 import DataTable from '../../components/shared/DataTable'
-import { CATEGORIES } from '../../data/dummy'
+import useQuery from '../../hooks/useQuery'
+import { fetchCategories } from '../../lib/api'
+import { useState } from 'react'
+
+async function loadCategories() {
+  const res = await fetchCategories()
+  return res.data || []
+}
 
 export default function Categories() {
-  const [data, setData] = useState(CATEGORIES)
+  const { data: all = [], loading, error } = useQuery(loadCategories)
   const [filter, setFilter] = useState('all')
+  const [local, setLocal] = useState(null)
+
+  const data = local ?? all
+  const visible = filter === 'disabled' ? data.filter(c => c.disabled)
+    : filter === 'active' ? data.filter(c => !c.disabled)
+    : data
 
   const toggle = (id) => {
-    setData(prev => prev.map(c => c.id === id ? { ...c, disabled: !c.disabled } : c))
+    setLocal(prev => (prev ?? all).map(c => c.id === id ? { ...c, disabled: !c.disabled } : c))
   }
-
-  const visible = filter === 'disabled'
-    ? data.filter(c => c.disabled)
-    : filter === 'active'
-    ? data.filter(c => !c.disabled)
-    : data
 
   const columns = [
     {
       key: 'color', title: 'Color',
-      render: c => (
-        <div style={{ width: 20, height: 20, borderRadius: 4, background: c.color }} />
-      ),
+      render: c => <div style={{ width: 20, height: 20, borderRadius: 4, background: c.color }} />,
     },
     {
       key: 'name', title: 'Name',
-      render: c => (
-        <span style={{ fontWeight: 500, color: c.disabled ? 'var(--text-muted)' : 'var(--text-primary)' }}>
-          {c.name}
-        </span>
-      ),
+      render: c => <span style={{ fontWeight: 500, color: c.disabled ? 'var(--text-muted)' : 'var(--text-primary)' }}>{c.name}</span>,
     },
     {
       key: 'active_journeys', title: 'Active Journeys',
-      render: c => (
-        <span style={{ color: 'var(--text-secondary)' }}>{c.active_journeys}</span>
-      ),
+      render: c => <span style={{ color: 'var(--text-secondary)' }}>{c.active_journeys}</span>,
     },
     {
       key: 'status', title: 'Status',
@@ -81,7 +79,8 @@ export default function Categories() {
         ))}
       </div>
 
-      <DataTable columns={columns} data={visible} />
+      {error && <div style={{ color: 'var(--danger)', fontSize: 13 }}>Error: {error}</div>}
+      {loading ? <div style={{ color: 'var(--text-muted)', padding: 16 }}>Loading...</div> : <DataTable columns={columns} data={visible} />}
     </div>
   )
 }

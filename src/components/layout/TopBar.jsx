@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { FiLogOut, FiSun, FiMoon } from 'react-icons/fi'
+import { useState, useEffect, useCallback } from 'react'
+import { FiLogOut, FiSun, FiMoon } from '../../vendor/react-icons-fi'
 import { useNavigate } from 'react-router-dom'
 
 const roleLabel = { super_admin: 'Super Admin', moderator: 'Moderator', support: 'Support' }
@@ -22,6 +22,8 @@ export default function TopBar({ user, admin }) {
   }, [theme])
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const logout = () => {
     localStorage.removeItem('admin_session')
@@ -67,7 +69,7 @@ export default function TopBar({ user, admin }) {
         {theme === 'dark' ? <FiSun size={15} /> : <FiMoon size={15} />}
       </button>
       <button
-        onClick={logout}
+        onClick={() => setConfirmOpen(true)}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           fontSize: 13, padding: '6px 12px', borderRadius: 6,
@@ -81,6 +83,48 @@ export default function TopBar({ user, admin }) {
         <FiLogOut size={14} />
         Sign out
       </button>
+
+      {confirmOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setConfirmOpen(false)}>
+          <div style={{
+            background: 'var(--surface)', borderRadius: 12,
+            border: '1px solid var(--border)',
+            padding: '28px 28px 24px',
+            width: 340, display: 'flex', flexDirection: 'column', gap: 16,
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--text-primary)' }}>Sign out?</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Are you sure you want to sign out of the admin panel?
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                style={{
+                  fontSize: 13, padding: '7px 16px', borderRadius: 6,
+                  background: 'var(--surface-alt)', border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)', cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={logout}
+                style={{
+                  fontSize: 13, padding: '7px 16px', borderRadius: 6,
+                  background: 'var(--danger)', border: 'none',
+                  color: '#fff', cursor: 'pointer', fontWeight: 600,
+                }}
+              >
+                Yes, sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

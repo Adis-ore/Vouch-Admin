@@ -1,114 +1,51 @@
-import { useState } from 'react'
-import { FiUserPlus } from 'react-icons/fi'
+import { FiUserPlus } from '../../vendor/react-icons-fi'
 import PageHeader from '../../components/layout/PageHeader'
 import DataTable from '../../components/shared/DataTable'
-import { ADMIN_ACCOUNTS } from '../../data/dummy'
+import useQuery from '../../hooks/useQuery'
+import { fetchAdminAccounts } from '../../lib/api'
 
-const roleLabel = { super_admin: 'Super Admin', moderator: 'Moderator', support: 'Support' }
-const roleColor = { super_admin: 'var(--accent)', moderator: 'var(--info)', support: 'var(--text-secondary)' }
+async function loadAccounts() {
+  const res = await fetchAdminAccounts()
+  return res.data || []
+}
 
 export default function AdminAccounts() {
-  const [accounts, setAccounts] = useState(ADMIN_ACCOUNTS)
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState('support')
-
-  const addAdmin = (e) => {
-    e.preventDefault()
-    if (!email) return
-    setAccounts(prev => [...prev, {
-      id: `a${Date.now()}`,
-      email,
-      role,
-      last_login: null,
-      status: 'active',
-    }])
-    setEmail('')
-    setRole('support')
-  }
-
-  const deactivate = (id) => {
-    setAccounts(prev => prev.filter(a => a.id !== id))
-  }
+  const { data = [], loading, error } = useQuery(loadAccounts)
 
   const columns = [
-    { key: 'email', title: 'Email', dataIndex: 'email' },
+    { key: 'name', title: 'Name', render: a => <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{a.full_name ?? '—'}</span> },
     {
       key: 'role', title: 'Role',
-      render: a => (
-        <span style={{
-          fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
-          background: 'var(--surface-alt)', color: roleColor[a.role] ?? 'var(--text-secondary)',
-        }}>
-          {roleLabel[a.role] ?? a.role}
+      render: () => (
+        <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: 'var(--surface-alt)', color: 'var(--accent)' }}>
+          Super Admin
         </span>
       ),
     },
     {
-      key: 'last_login', title: 'Last Login',
-      render: a => a.last_login
-        ? <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{new Date(a.last_login).toLocaleDateString()}</span>
-        : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Never</span>,
+      key: 'joined', title: 'Joined',
+      render: a => <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{a.created_at?.split('T')[0] ?? '—'}</span>,
     },
     {
       key: 'status', title: 'Status',
-      render: a => (
-        <span style={{
-          fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
-          background: 'rgba(62,207,170,0.1)', color: 'var(--success)',
-        }}>
-          {a.status}
+      render: () => (
+        <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: 'rgba(62,207,170,0.1)', color: 'var(--success)' }}>
+          active
         </span>
-      ),
-    },
-    {
-      key: 'actions', title: '',
-      render: a => (
-        <button
-          className="btn-muted"
-          style={{ color: 'var(--danger)' }}
-          onClick={() => deactivate(a.id)}
-        >
-          Deactivate
-        </button>
       ),
     },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <PageHeader title="Admin Accounts" subtitle="Super admin access required to manage accounts" />
+      <PageHeader title="Admin Accounts" subtitle="Users with is_admin = true" />
 
-      <div className="panel">
-        <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
-          Add Admin Account
-        </div>
-        <form onSubmit={addAdmin} style={{ display: 'grid', gridTemplateColumns: '1fr 180px auto', gap: 12, alignItems: 'flex-end' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="admin@vouch.app"
-              required
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>Role</label>
-            <select value={role} onChange={e => setRole(e.target.value)}>
-              <option value="super_admin">Super Admin</option>
-              <option value="moderator">Moderator</option>
-              <option value="support">Support</option>
-            </select>
-          </div>
-          <button type="submit" className="btn-accent" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <FiUserPlus size={14} />
-            Add admin
-          </button>
-        </form>
+      <div className="panel" style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 16px' }}>
+        To grant admin access, run: <code style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>UPDATE public.users SET is_admin = TRUE WHERE id = '&lt;user_id&gt;'</code>
       </div>
 
-      <DataTable columns={columns} data={accounts} />
+      {error && <div style={{ color: 'var(--danger)', fontSize: 13 }}>Error: {error}</div>}
+      {loading ? <div style={{ color: 'var(--text-muted)', padding: 16 }}>Loading...</div> : <DataTable columns={columns} data={data} />}
     </div>
   )
 }

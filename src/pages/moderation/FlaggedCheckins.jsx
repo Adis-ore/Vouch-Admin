@@ -1,17 +1,28 @@
 import { useState } from 'react'
-import { FiExternalLink } from 'react-icons/fi'
+import { FiExternalLink } from '../../vendor/react-icons-fi'
 import PageHeader from '../../components/layout/PageHeader'
 import DataTable from '../../components/shared/DataTable'
 import StatusBadge from '../../components/shared/StatusBadge'
-import { FLAGGED_CHECKINS } from '../../data/dummy'
+import useQuery from '../../hooks/useQuery'
+import { fetchFlaggedCheckins, resolveCheckin } from '../../lib/api'
+
+async function loadFlagged() {
+  const res = await fetchFlaggedCheckins({ limit: 100 })
+  return res.data || []
+}
 
 export default function FlaggedCheckins() {
-  const [data, setData] = useState(FLAGGED_CHECKINS)
+  const { data = [], loading, error, refetch } = useQuery(loadFlagged)
+  const [acting, setActing] = useState({})
 
-  const resolve = (id, action) => {
-    setData(prev => prev.map(item =>
-      item.id === id ? { ...item, status: action } : item
-    ))
+  const resolve = async (id, action) => {
+    setActing(a => ({ ...a, [id]: action }))
+    try {
+      await resolveCheckin(id, action)
+      refetch()
+    } finally {
+      setActing(a => { const n = { ...a }; delete n[id]; return n })
+    }
   }
 
   const columns = [
@@ -19,26 +30,24 @@ export default function FlaggedCheckins() {
       key: 'user', title: 'User',
       render: row => (
         <div>
-          <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.user}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{row.journey}</div>
+          <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.user?.full_name ?? '—'}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{row.journey?.title ?? '—'}</div>
         </div>
       ),
     },
-    { key: 'date', title: 'Date', dataIndex: 'date' },
+    { key: 'date', title: 'Date', render: row => row.checkin_date ?? '—' },
     {
       key: 'note', title: 'Check-in Note',
       render: row => (
         <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-          {row.note.length > 45 ? row.note.slice(0, 45) + '...' : row.note}
+          {row.note ? (row.note.length > 45 ? row.note.slice(0, 45) + '...' : row.note) : '—'}
         </span>
       ),
     },
     {
       key: 'proof', title: 'Proof',
-      render: row => row.proof
-        ? <a href={row.proof} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--info)', fontSize: 12 }}>
-            View <FiExternalLink size={11} />
-          </a>
+      render: row => row.proof_url
+        ? <a href={row.proof_url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--info)', fontSize: 12 }}>View <FiExternalLink size={11} /></a>
         : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>None</span>,
     },
     {
@@ -50,49 +59,47 @@ export default function FlaggedCheckins() {
       ),
     },
     {
-      key: 'partner_note', title: 'Partner Note',
-      render: row => (
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          {row.partner_note}
-        </span>
-      ),
+      key: 'status', title: 'Status',
+      render: row => <StatusBadge status={row.status ?? 'pending'} />,
     },
-    { key: 'status', title: 'Status', render: row => <StatusBadge status={row.status} /> },
     {
       key: 'actions', title: '',
-      render: row => row.status === 'pending'
-        ? (
+      render: row => {
+        if (row.status === 'approved' || row.status === 'rejected') {
+          return <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Done</span>
+        }
+        return (
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               className="btn-muted"
+              disabled={!!acting[row.id]}
               style={{ color: 'var(--success)', borderColor: 'rgba(62,207,170,0.3)' }}
-              onClick={() => resolve(row.id, 'reviewed')}
+              onClick={() => resolve(row.id, 'approve')}
             >
-              Approve
+              {acting[row.id] === 'approve' ? '...' : 'Approve'}
             </button>
             <button
               className="btn-muted"
+              disabled={!!acting[row.id]}
               style={{ color: 'var(--danger)', borderColor: 'rgba(232,93,74,0.3)' }}
-              onClick={() => resolve(row.id, 'actioned')}
+              onClick={() => resolve(row.id, 'reject')}
             >
-              Reject
+              {acting[row.id] === 'reject' ? '...' : 'Reject'}
             </button>
           </div>
-        ) : (
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Done</span>
-        ),
+        )
+      },
     },
   ]
 
-  const pending = data.filter(d => d.status === 'pending').length
+  const rows = data || []
+  const pending = rows.filter(d => d.status !== 'approved' && d.status !== 'rejected').length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <PageHeader
-        title="Flagged Check-ins"
-        subtitle={`${pending} pending review`}
-      />
-      <DataTable columns={columns} data={data} />
+      <PageHeader title="Flagged Check-ins" subtitle={loading ? 'Loading...' : `${pending} pending review`} />
+      {error && <div style={{ color: 'var(--danger)', fontSize: 13 }}>Error: {error}</div>}
+      <DataTable columns={columns} data={rows} />
     </div>
   )
 }

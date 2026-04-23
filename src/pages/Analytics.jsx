@@ -5,8 +5,15 @@ import {
 } from 'recharts'
 import PageHeader from '../components/layout/PageHeader'
 import StatCard from '../components/shared/StatCard'
-import { STATS, SIGNUP_CHART_DATA, CHECKINS_CHART_DATA, JOURNEY_STATUS_DATA, WEEKLY_REVENUE, CATEGORIES } from '../data/dummy'
-import { FiTrendingUp, FiUsers, FiRepeat, FiActivity, FiClock, FiUserMinus, FiUserCheck, FiLock, FiZap } from 'react-icons/fi'
+import useQuery from '../hooks/useQuery'
+import { fetchStats, fetchCharts } from '../lib/api'
+import { CATEGORIES } from '../data/dummy'
+import { FiTrendingUp, FiUsers, FiRepeat, FiActivity, FiClock, FiUserMinus, FiUserCheck, FiLock, FiZap } from '../vendor/react-icons-fi'
+
+async function loadAnalytics() {
+  const [statsRes, chartsRes] = await Promise.all([fetchStats(), fetchCharts()])
+  return { stats: statsRes.data, charts: chartsRes.data }
+}
 
 // ─── App Behaviour Data ──────────────────────────────────────────────────────
 
@@ -166,17 +173,28 @@ const chartStyle = {
   color: 'var(--text-primary)',
 }
 
+function fmt(n) { return Number(n || 0).toLocaleString() }
+
 export default function Analytics() {
+  const { data, loading, error } = useQuery(loadAnalytics)
+  const stats = data?.stats || {}
+  const signupChart = data?.charts?.signupChart || []
+  const checkinChart = data?.charts?.checkinChart || []
+  const journeyStatusChart = data?.charts?.journeyStatusChart || []
+
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: 32 }}>Loading...</div>
+  if (error) return <div style={{ color: 'var(--danger)', padding: 32 }}>Error: {error}</div>
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <PageHeader title="Analytics" subtitle="Deep-dive into platform trends and performance" />
 
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-        <StatCard label="30-day New Users" value={`+${STATS.newUsersThisWeek * 4}`} delta={21} subtext="vs prior 30d" icon={FiUsers} />
-        <StatCard label="Avg Completion Rate" value="64%" delta={4} subtext="across all categories" icon={FiTrendingUp} />
-        <StatCard label="DAU / MAU Ratio" value="18.5%" delta={2} subtext="engagement health" icon={FiActivity} />
-        <StatCard label="Stake Renewal Rate" value="71%" delta={8} subtext="users re-staking" icon={FiRepeat} />
+        <StatCard label="Total Users" value={fmt(stats.totalUsers)} delta={stats.newUsersThisWeek - stats.newUsersLastWeek} subtext="all time" icon={FiUsers} />
+        <StatCard label="Journeys Completed" value={fmt(stats.journeysCompleted)} delta={null} subtext="all time" icon={FiTrendingUp} />
+        <StatCard label="Active Journeys" value={fmt(stats.activeJourneys)} delta={null} subtext="currently running" icon={FiActivity} />
+        <StatCard label="New This Week" value={fmt(stats.newUsersThisWeek)} delta={stats.newUsersThisWeek - stats.newUsersLastWeek} subtext={`vs ${fmt(stats.newUsersLastWeek)} last week`} icon={FiRepeat} />
       </div>
 
       {/* Signups + Retention */}
@@ -186,7 +204,7 @@ export default function Analytics() {
             User Acquisition — last 14 days
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={SIGNUP_CHART_DATA}>
+            <AreaChart data={signupChart}>
               <defs>
                 <linearGradient id="acqGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.35} />
@@ -222,6 +240,21 @@ export default function Analytics() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div className="panel">
           <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
+            Check-ins — last 7 days
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={checkinChart}>
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={chartStyle} />
+              <Bar dataKey="checkins" fill="var(--success)" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="panel">
+          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
             Daily vs Weekly Active Users
           </div>
           <ResponsiveContainer width="100%" height={200}>
@@ -234,21 +267,6 @@ export default function Analytics() {
               <Line type="monotone" dataKey="dau" name="DAU" stroke="var(--success)" strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="wau" name="WAU" stroke="var(--info)" strokeWidth={2} dot={false} />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="panel">
-          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)', marginBottom: 16 }}>
-            Weekly Revenue Trend
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={WEEKLY_REVENUE}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey="week" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `₦${(v/1000).toFixed(0)}k`} />
-              <Tooltip contentStyle={chartStyle} formatter={v => [`₦${v.toLocaleString()}`, 'Revenue']} />
-              <Bar dataKey="revenue" fill="var(--accent)" radius={[3, 3, 0, 0]} />
-            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -297,7 +315,7 @@ export default function Analytics() {
             Daily Check-in Volume
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={CHECKINS_CHART_DATA}>
+            <AreaChart data={checkinChart}>
               <defs>
                 <linearGradient id="checkinGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--success)" stopOpacity={0.35} />
@@ -319,8 +337,8 @@ export default function Analytics() {
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={JOURNEY_STATUS_DATA} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                {JOURNEY_STATUS_DATA.map((entry, i) => (
+              <Pie data={journeyStatusChart} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={3}>
+                {journeyStatusChart.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Pie>
@@ -343,7 +361,7 @@ export default function Analytics() {
         <StatCard label="Avg Session Duration" value="6m 42s" delta={12} subtext="per active user" icon={FiClock} />
         <StatCard label="30-day Churn Rate" value="9.7%" delta={-11} subtext="vs 10.9% prior month" icon={FiUserMinus} />
         <StatCard label="Avg Group Size" value="3.6" delta={7} subtext="members per journey" icon={FiUserCheck} />
-        <StatCard label="Total Stakes Locked" value={`₦${(STATS.stakesHeld / 1000000).toFixed(2)}M`} delta={18} subtext="across active journeys" icon={FiLock} />
+        <StatCard label="Total Stakes Locked" value={`₦${((stats.stakesHeld || 0) / 1000).toFixed(0)}k`} delta={null} subtext="across active journeys" icon={FiLock} />
       </div>
 
       {/* Onboarding Funnel + Streak Distribution */}

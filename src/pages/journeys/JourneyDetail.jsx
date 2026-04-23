@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiUsers, FiCalendar, FiCreditCard, FiMapPin } from 'react-icons/fi'
+import { FiArrowLeft, FiUsers, FiCalendar, FiCreditCard, FiMapPin } from '../../vendor/react-icons-fi'
 import PageHeader from '../../components/layout/PageHeader'
 import StatusBadge from '../../components/shared/StatusBadge'
 import { JOURNEYS, USERS } from '../../data/dummy'

@@ -2,58 +2,66 @@ import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader'
 import DataTable from '../../components/shared/DataTable'
 import UserAvatar from '../../components/shared/UserAvatar'
-import { USERS } from '../../data/dummy'
+import useQuery from '../../hooks/useQuery'
+import { fetchFlaggedUsers } from '../../lib/api'
 
-const flagged = USERS.filter(u => u.flagged)
+async function loadFlaggedUsers() {
+  const res = await fetchFlaggedUsers({ limit: 100 })
+  return res.data || []
+}
 
 export default function FlaggedUsers() {
   const navigate = useNavigate()
+  const { data, loading, error } = useQuery(loadFlaggedUsers)
+  const rows = data || []
 
   const columns = [
     {
       key: 'user', title: 'User',
       render: u => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <UserAvatar name={u.name} />
+          <UserAvatar name={u.full_name} />
           <div>
-            <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{u.name}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{u.phone}</div>
+            <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{u.full_name ?? '—'}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{u.total_flags_received ?? 0} flags received</div>
           </div>
         </div>
       ),
     },
-    { key: 'country', title: 'Location', render: u => `${u.region}, ${u.country}` },
-    { key: 'journeys', title: 'Journeys', dataIndex: 'journeys' },
-    { key: 'streak', title: 'Streak', render: u => `${u.streak}d` },
+    {
+      key: 'location', title: 'Location',
+      render: u => u.region || u.country ? `${u.region ?? ''}${u.region && u.country ? ', ' : ''}${u.country ?? ''}` : '—',
+    },
+    { key: 'journeys', title: 'Journeys', render: u => u.journeys_completed ?? 0 },
+    { key: 'streak', title: 'Streak', render: u => `${u.current_streak ?? 0}d` },
     {
       key: 'reputation', title: 'Reputation',
-      render: u => (
-        <span style={{ fontWeight: 600, color: 'var(--danger)' }}>{u.reputation}</span>
-      ),
+      render: u => <span style={{ fontWeight: 600, color: 'var(--danger)' }}>{u.reputation_score ?? 0}</span>,
     },
     {
       key: 'stake', title: 'Stake',
       render: u => (
         <span style={{ fontSize: 12, color: u.stake_status === 'forfeited' ? 'var(--danger)' : 'var(--text-secondary)' }}>
-          {u.stake_status}
+          {u.stake_status ?? '—'}
         </span>
       ),
     },
-    { key: 'status', title: 'Account', render: u => (
-      <span style={{
-        fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
-        background: u.status === 'suspended' ? 'rgba(232,93,74,0.12)' : 'rgba(240,165,0,0.12)',
-        color: u.status === 'suspended' ? 'var(--danger)' : 'var(--warning)',
-      }}>
-        {u.status}
-      </span>
-    )},
+    {
+      key: 'account', title: 'Account',
+      render: u => (
+        <span style={{
+          fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
+          background: u.is_banned ? 'rgba(232,93,74,0.12)' : 'rgba(240,165,0,0.12)',
+          color: u.is_banned ? 'var(--danger)' : 'var(--warning)',
+        }}>
+          {u.is_banned ? 'banned' : 'active'}
+        </span>
+      ),
+    },
     {
       key: 'actions', title: '',
       render: u => (
-        <button className="btn-muted" onClick={() => navigate(`/users/${u.id}`)}>
-          Review
-        </button>
+        <button className="btn-muted" onClick={() => navigate(`/users/${u.id}`)}>Review</button>
       ),
     },
   ]
@@ -62,9 +70,10 @@ export default function FlaggedUsers() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <PageHeader
         title="Flagged Users"
-        subtitle={`${flagged.length} users flagged for review`}
+        subtitle={loading ? 'Loading...' : `${rows.length} user${rows.length !== 1 ? 's' : ''} flagged for review`}
       />
-      <DataTable columns={columns} data={flagged} />
+      {error && <div style={{ color: 'var(--danger)', fontSize: 13 }}>Error: {error}</div>}
+      <DataTable columns={columns} data={rows} />
     </div>
   )
 }

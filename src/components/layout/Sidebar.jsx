@@ -1,49 +1,46 @@
 import { NavLink } from 'react-router-dom'
 import {
-  FiGrid, FiUsers, FiFlag, FiMapPin, FiCompass, FiBookOpen,
-  FiAlertTriangle, FiMessageSquare, FiCreditCard, FiTrendingDown,
-  FiTag, FiBell, FiShield, FiSettings, FiBarChart2,
-} from 'react-icons/fi'
-import { FLAGGED_CHECKINS, DISPUTES, USERS } from '../../data/dummy'
-
-const flaggedUsers = USERS.filter(u => u.flagged).length
-const pendingCheckins = FLAGGED_CHECKINS.filter(c => c.status === 'pending').length
-const openDisputes = DISPUTES.filter(d => d.status === 'open').length
+  FiGrid, FiUsers, FiFlag, FiMapPin, FiCompass,
+  FiAlertTriangle, FiMessageSquare, FiCreditCard, FiTrendingDown, FiRepeat,
+  FiTag, FiBell, FiShield, FiSettings, FiBarChart2, FiTrendingUp,
+} from '../../vendor/react-icons-fi'
 
 const sections = [
   {
     label: 'Overview',
     items: [
-      { label: 'Dashboard',    path: '/dashboard',               icon: FiGrid },
-      { label: 'Analytics',    path: '/analytics',               icon: FiBarChart2 },
+      { label: 'Dashboard',    path: '/dashboard',    icon: FiGrid },
+      { label: 'Analytics',    path: '/analytics',    icon: FiBarChart2 },
     ],
   },
   {
     label: 'Users',
     items: [
-      { label: 'All Users',     path: '/users',         icon: FiUsers,       badge: null },
-      { label: 'Flagged Users', path: '/users/flagged', icon: FiFlag,        badge: flaggedUsers > 0 ? flaggedUsers : null },
+      { label: 'All Users',     path: '/users',         icon: FiUsers },
+      { label: 'Flagged Users', path: '/users/flagged', icon: FiFlag  },
     ],
   },
   {
     label: 'Journeys',
     items: [
-      { label: 'All Journeys',    path: '/journeys',       icon: FiCompass },
-      { label: 'Open Journeys',   path: '/journeys/open',  icon: FiMapPin  },
+      { label: 'All Journeys',  path: '/journeys',      icon: FiCompass },
+      { label: 'Open Journeys', path: '/journeys/open', icon: FiMapPin  },
     ],
   },
   {
     label: 'Moderation',
     items: [
-      { label: 'Flagged Check-ins', path: '/moderation/checkins',  icon: FiAlertTriangle, badge: pendingCheckins > 0 ? pendingCheckins : null },
-      { label: 'Dispute Queue',     path: '/moderation/disputes',  icon: FiMessageSquare, badge: openDisputes > 0 ? openDisputes : null },
+      { label: 'Flagged Check-ins', path: '/moderation/checkins', icon: FiAlertTriangle },
+      { label: 'Dispute Queue',     path: '/moderation/disputes', icon: FiMessageSquare },
     ],
   },
   {
     label: 'Payments',
     items: [
-      { label: 'Active Stakes',   path: '/payments/stakes',       icon: FiCreditCard    },
-      { label: 'Forfeiture Log',  path: '/payments/forfeitures',  icon: FiTrendingDown  },
+      { label: 'Stakes',           path: '/payments/stakes',          icon: FiCreditCard  },
+      { label: 'Forfeiture Log',   path: '/payments/forfeitures',     icon: FiTrendingDown },
+      { label: 'Refund Log',       path: '/payments/refunds',         icon: FiTrendingUp  },
+      { label: 'Refund Failures',  path: '/payments/refund-failures', icon: FiRepeat      },
     ],
   },
   {
